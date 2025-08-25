@@ -15,6 +15,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,12 +24,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navigation
 import com.zahab.androidinternals.ui.theme.AndroidInternalszahabTheme
 import kotlinx.serialization.Serializable
 
@@ -65,7 +71,9 @@ class MainActivity : ComponentActivity() {
                         composable<ScreenA> {
                             val counterViewModel = viewModel<CounterViewModel>()
 
-                            ScreenA(
+                            Screen(
+                                text = "Go To Screen B",
+                                route = ScreenBAndCGraph,
                                 content = {
                                     Content(
                                         screenName = ScreenA.toString(),
@@ -76,14 +84,45 @@ class MainActivity : ComponentActivity() {
                                 navController = navController
                             )
                         }
-                        composable<ScreenB> {
-                            val counterViewModel = viewModel<CounterViewModel>()
 
-                            Content(
-                                screenName = ScreenB.toString(),
-                                counter = counterViewModel.counter,
-                                onIncrementClick = counterViewModel::increment,
-                            )
+
+                        navigation<ScreenBAndCGraph>(
+                            startDestination = ScreenB,
+                        ) {
+
+                            composable<ScreenB> {
+                                val counterViewModel =
+                                    it.sharedViewModel<CounterViewModel>(navController)
+
+
+                                Screen(
+                                    text = "Go To Screen C",
+                                    route = ScreenC,
+                                    content = {
+                                        Content(
+                                            screenName = ScreenB.toString(),
+                                            counter = counterViewModel.counter,
+                                            onIncrementClick = counterViewModel::increment,
+                                        )
+                                    },
+                                    navController = navController
+                                )
+
+
+                            }
+
+                            composable<ScreenC> {
+                                val counterViewModel =
+                                    it.sharedViewModel<CounterViewModel>(navController)
+
+                                Content(
+                                    screenName = ScreenC.toString(),
+                                    counter = counterViewModel.counter,
+                                    onIncrementClick = counterViewModel::increment,
+                                )
+                            }
+
+
                         }
                     }
                 }
@@ -93,7 +132,25 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun ScreenA(
+private inline fun <reified VM : ViewModel> NavBackStackEntry.sharedViewModel(
+    navController: NavController
+): VM {
+
+    val parentRoute = destination.parent?.route
+        ?: error("sharedViewModel() called but no parent route found. Are you inside a nested graph?")
+
+    val parentEntry = remember(this) {
+        navController.getBackStackEntry(route = parentRoute)
+    }
+
+    return viewModel(viewModelStoreOwner = parentEntry)
+}
+
+
+@Composable
+fun Screen(
+    text: String,
+    route: Any,
     content: @Composable () -> Unit,
     navController: NavController,
 ) {
@@ -103,13 +160,13 @@ fun ScreenA(
         }
         Button(
             onClick = {
-                navController.navigate(ScreenB)
+                navController.navigate(route)
             },
             modifier = Modifier.padding(16.dp)
 
         ) {
             Text(
-                text = "Go to Screen B"
+                text = text
             )
         }
     }
@@ -160,7 +217,9 @@ fun Content(
 fun ScreenAPreview() {
     val navController = rememberNavController()
 
-    ScreenA(
+    Screen(
+        text = "Go To Specific Screen",
+        route = Unit,
         content = {
             Content("ScreenA", 5, {})
 
@@ -181,3 +240,9 @@ data object ScreenA
 
 @Serializable
 data object ScreenB
+
+@Serializable
+data object ScreenC
+
+@Serializable
+data object ScreenBAndCGraph
