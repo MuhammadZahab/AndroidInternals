@@ -39,9 +39,21 @@ import com.zahab.androidinternals.ui.theme.AndroidInternalszahabTheme
 import kotlinx.serialization.Serializable
 
 class MainActivity : ComponentActivity() {
+    private lateinit var customViewModelStore: CustomViewModelStore
+    private lateinit var customViewModelProvider: CustomViewModelProvider
+    private lateinit var counterViewModel: CounterViewModel
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val lastStore = lastCustomNonConfigurationInstance as? CustomViewModelStore
+        customViewModelStore = lastStore ?: CustomViewModelStore()
+        customViewModelProvider = CustomViewModelProvider(customViewModelStore)
+
+        counterViewModel = customViewModelProvider.get(CounterViewModel::class.java)
+
         setContent {
 
             AndroidInternalszahabTheme {
@@ -69,7 +81,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.padding(_innerPadding)
                     ) {
                         composable<ScreenA> {
-                            val counterViewModel = viewModel<CounterViewModel>()
+                            //val counterViewModel = viewModel<CounterViewModel>()
 
                             Screen(
                                 text = "Go To Screen B",
@@ -91,8 +103,7 @@ class MainActivity : ComponentActivity() {
                         ) {
 
                             composable<ScreenB> {
-                                val counterViewModel =
-                                    it.sharedViewModel<CounterViewModel>(navController)
+                                // val counterViewModel = it.sharedViewModel<CounterViewModel>(navController)
 
 
                                 Screen(
@@ -112,8 +123,7 @@ class MainActivity : ComponentActivity() {
                             }
 
                             composable<ScreenC> {
-                                val counterViewModel =
-                                    it.sharedViewModel<CounterViewModel>(navController)
+                                //    val counterViewModel = it.sharedViewModel<CounterViewModel>(navController)
 
                                 Content(
                                     screenName = ScreenC.toString(),
@@ -127,6 +137,20 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+
+
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onRetainCustomNonConfigurationInstance(): Any? {
+        return customViewModelStore
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (isFinishing) {
+            customViewModelStore.clear()
         }
     }
 }

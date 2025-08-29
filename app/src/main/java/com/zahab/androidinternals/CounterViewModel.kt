@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 
-class CounterViewModel : ViewModel() {
+class CounterViewModel : CustomViewModel() {
 
      var counter by mutableIntStateOf(0)
     private set
