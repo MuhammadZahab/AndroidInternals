@@ -3,16 +3,20 @@ package com.zahab.androidinternals
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 
-class CounterViewModel : ViewModel() {
+class CounterViewModel(
+    private val savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
-     var counter by mutableIntStateOf(0)
-    private set
+    val counter = savedStateHandle.getStateFlow("counter",0)
 
 
     fun increment(){
-        counter++
+        savedStateHandle.get<Int>("counter")?.let { counter->
+            savedStateHandle["counter"] = counter + 1
+        }
     }
 
     override fun onCleared() {

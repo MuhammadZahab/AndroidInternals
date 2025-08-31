@@ -15,6 +15,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,8 +27,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelStore
-import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
@@ -36,6 +36,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import com.zahab.androidinternals.ui.theme.AndroidInternalszahabTheme
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 
 class MainActivity : ComponentActivity() {
@@ -61,7 +62,8 @@ class MainActivity : ComponentActivity() {
 //                        navController = navController,
 //                        graph = navGraph
 //                    )
-
+                    val counterViewModel = viewModel<CounterViewModel>()
+                    val counter by counterViewModel.counter.collectAsState()
 
                     NavHost(
                         navController = navController,
@@ -69,7 +71,6 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.padding(_innerPadding)
                     ) {
                         composable<ScreenA> {
-                            val counterViewModel = viewModel<CounterViewModel>()
 
                             Screen(
                                 text = "Go To Screen B",
@@ -77,7 +78,7 @@ class MainActivity : ComponentActivity() {
                                 content = {
                                     Content(
                                         screenName = ScreenA.toString(),
-                                        counter = counterViewModel.counter,
+                                        counter = counter,
                                         onIncrementClick = counterViewModel::increment,
                                     )
                                 },
@@ -91,8 +92,7 @@ class MainActivity : ComponentActivity() {
                         ) {
 
                             composable<ScreenB> {
-                                val counterViewModel =
-                                    it.sharedViewModel<CounterViewModel>(navController)
+
 
 
                                 Screen(
@@ -101,7 +101,7 @@ class MainActivity : ComponentActivity() {
                                     content = {
                                         Content(
                                             screenName = ScreenB.toString(),
-                                            counter = counterViewModel.counter,
+                                            counter = counter,
                                             onIncrementClick = counterViewModel::increment,
                                         )
                                     },
@@ -112,12 +112,11 @@ class MainActivity : ComponentActivity() {
                             }
 
                             composable<ScreenC> {
-                                val counterViewModel =
-                                    it.sharedViewModel<CounterViewModel>(navController)
+
 
                                 Content(
                                     screenName = ScreenC.toString(),
-                                    counter = counterViewModel.counter,
+                                    counter = counter,
                                     onIncrementClick = counterViewModel::increment,
                                 )
                             }
