@@ -27,6 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
@@ -36,7 +37,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import com.zahab.androidinternals.ui.theme.AndroidInternalszahabTheme
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 
 class MainActivity : ComponentActivity() {
@@ -62,8 +62,8 @@ class MainActivity : ComponentActivity() {
 //                        navController = navController,
 //                        graph = navGraph
 //                    )
-                    val counterViewModel = viewModel<CounterViewModel>()
-                    val counter by counterViewModel.counter.collectAsState()
+//                    val counterViewModel = viewModel<CounterViewModel>()
+//                    val counter by counterViewModel.counter.collectAsStateWithLifecycle()
 
                     NavHost(
                         navController = navController,
@@ -72,12 +72,15 @@ class MainActivity : ComponentActivity() {
                     ) {
                         composable<ScreenA> {
 
+                            val counterViewModel = viewModel<CounterViewModel>()
+                            val counter by counterViewModel.counter.collectAsStateWithLifecycle()
+
                             Screen(
                                 text = "Go To Screen B",
-                                route = ScreenBAndCGraph,
+                                route = ScreenB("Assalam Alikum"),
                                 content = {
                                     Content(
-                                        screenName = ScreenA.toString(),
+                                        screenName = ScreenA::class.simpleName.toString(),
                                         counter = counter,
                                         onIncrementClick = counterViewModel::increment,
                                     )
@@ -87,161 +90,152 @@ class MainActivity : ComponentActivity() {
                         }
 
 
-                        navigation<ScreenBAndCGraph>(
-                            startDestination = ScreenB,
-                        ) {
+                        composable<ScreenB> {
+                            val counterViewModel = viewModel<CounterViewModel>()
+                            val counter by counterViewModel.counter.collectAsStateWithLifecycle()
 
-                            composable<ScreenB> {
-
-
-
-                                Screen(
-                                    text = "Go To Screen C",
-                                    route = ScreenC,
-                                    content = {
-                                        Content(
-                                            screenName = ScreenB.toString(),
-                                            counter = counter,
-                                            onIncrementClick = counterViewModel::increment,
-                                        )
-                                    },
-                                    navController = navController
-                                )
-
-
-                            }
-
-                            composable<ScreenC> {
-
-
-                                Content(
-                                    screenName = ScreenC.toString(),
-                                    counter = counter,
-                                    onIncrementClick = counterViewModel::increment,
-                                )
-                            }
-
-
+                            Screen(
+                                text = "Go To Screen C",
+                                route = ScreenC,
+                                content = {
+                                    Content(
+                                        screenName = ScreenB::class.simpleName.toString(),
+                                        counter = counter,
+                                        onIncrementClick = counterViewModel::increment,
+                                    )
+                                },
+                                navController = navController
+                            )
                         }
+
+                        composable<ScreenC> {
+                            val counterViewModel = viewModel<CounterViewModel>()
+                            val counter by counterViewModel.counter.collectAsStateWithLifecycle()
+                            Content(
+                                screenName = ScreenC::class.simpleName.toString(),
+                                counter = counter,
+                                onIncrementClick = counterViewModel::increment,
+                            )
+                        }
+
+
                     }
+
                 }
             }
         }
     }
 }
 
-@Composable
-private inline fun <reified VM : ViewModel> NavBackStackEntry.sharedViewModel(
-    navController: NavController
-): VM {
+    @Composable
+    private inline fun <reified VM : ViewModel> NavBackStackEntry.sharedViewModel(
+        navController: NavController
+    ): VM {
 
-    val parentRoute = destination.parent?.route
-        ?: error("sharedViewModel() called but no parent route found. Are you inside a nested graph?")
+        val parentRoute = destination.parent?.route
+            ?: error("sharedViewModel() called but no parent route found. Are you inside a nested graph?")
 
-    val parentEntry = remember(this) {
-        navController.getBackStackEntry(route = parentRoute)
+        val parentEntry = remember(this) {
+            navController.getBackStackEntry(route = parentRoute)
+        }
+
+        return viewModel(viewModelStoreOwner = parentEntry)
     }
 
-    return viewModel(viewModelStoreOwner = parentEntry)
-}
 
+    @Composable
+    fun Screen(
+        text: String,
+        route: Any,
+        content: @Composable () -> Unit,
+        navController: NavController,
+    ) {
+        Column(modifier = Modifier.background(color = Color.White)) {
+            Box(modifier = Modifier.weight(1f)) {
+                content()
+            }
+            Button(
+                onClick = {
+                    navController.navigate(route)
+                },
+                modifier = Modifier.padding(16.dp)
 
-@Composable
-fun Screen(
-    text: String,
-    route: Any,
-    content: @Composable () -> Unit,
-    navController: NavController,
-) {
-    Column(modifier = Modifier.background(color = Color.White)) {
-        Box(modifier = Modifier.weight(1f)) {
-            content()
-        }
-        Button(
-            onClick = {
-                navController.navigate(route)
-            },
-            modifier = Modifier.padding(16.dp)
-
-        ) {
-            Text(
-                text = text
-            )
+            ) {
+                Text(
+                    text = text
+                )
+            }
         }
     }
-}
 
 
-@Composable
-fun Content(
-    screenName: String,
-    counter: Int,
-    onIncrementClick: () -> Unit,
-) {
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(color = Color.White),
-        contentAlignment = Alignment.Center
+    @Composable
+    fun Content(
+        screenName: String,
+        counter: Int,
+        onIncrementClick: () -> Unit,
     ) {
 
-
-        Text(
+        Box(
             modifier = Modifier
-                .align(alignment = Alignment.TopCenter)
-                .fillMaxWidth()
-                .padding(20.dp),
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Left,
-            text = screenName
-        )
-
-        Button(
-            onClick = onIncrementClick,
+                .fillMaxSize()
+                .background(color = Color.White),
+            contentAlignment = Alignment.Center
         ) {
+
+
             Text(
-                modifier = Modifier.wrapContentSize(),
-                text = "Counter = $counter"
+                modifier = Modifier
+                    .align(alignment = Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Left,
+                text = screenName
             )
+
+            Button(
+                onClick = onIncrementClick,
+            ) {
+                Text(
+                    modifier = Modifier.wrapContentSize(),
+                    text = "Counter = $counter"
+                )
+            }
         }
     }
-}
 
 
-@Composable
-@Preview(showBackground = true)
+    @Composable
+    @Preview(showBackground = true)
 
-fun ScreenAPreview() {
-    val navController = rememberNavController()
+    fun ScreenAPreview() {
+        val navController = rememberNavController()
 
-    Screen(
-        text = "Go To Specific Screen",
-        route = Unit,
-        content = {
-            Content("ScreenA", 5, {})
+        Screen(
+            text = "Go To Specific Screen",
+            route = Unit,
+            content = {
+                Content("ScreenA", 5, {})
 
-        },
-        navController = navController
-    )
+            },
+            navController = navController
+        )
 
-}
+    }
 
-@Composable
-@Preview(showBackground = true)
-fun ContentPreview() {
-    Content("ScreenA", 5, {})
-}
+    @Composable
+    @Preview(showBackground = true)
+    fun ContentPreview() {
+        Content("ScreenA", 5, {})
+    }
 
-@Serializable
-data object ScreenA
+    @Serializable
+    data object ScreenA
 
-@Serializable
-data object ScreenB
+    @Serializable
+    data class ScreenB(val greetings: String)
 
-@Serializable
-data object ScreenC
-
-@Serializable
-data object ScreenBAndCGraph
+    @Serializable
+    data object ScreenC
