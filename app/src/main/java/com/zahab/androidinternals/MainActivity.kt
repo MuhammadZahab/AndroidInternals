@@ -15,6 +15,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -75,6 +76,13 @@ class MainActivity : ComponentActivity() {
                             val counterViewModel = viewModel<CounterViewModel>()
                             val counter by counterViewModel.counter.collectAsStateWithLifecycle()
 
+                           val screenBCounter by  it.savedStateHandle.getStateFlow("counter_screen_b", 0)
+                                .collectAsStateWithLifecycle()
+
+                            LaunchedEffect(true) {
+                                println("The counter on Screen B was $screenBCounter")
+                            }
+
                             Screen(
                                 text = "Go To Screen B",
                                 route = ScreenB("Assalam Alikum"),
@@ -94,6 +102,12 @@ class MainActivity : ComponentActivity() {
                             val counterViewModel = viewModel<CounterViewModel>()
                             val counter by counterViewModel.counter.collectAsStateWithLifecycle()
 
+                            LaunchedEffect(counter) {
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set("counter_screen_b", counter)
+                            }
+
                             Screen(
                                 text = "Go To Screen C",
                                 route = ScreenC,
@@ -101,7 +115,9 @@ class MainActivity : ComponentActivity() {
                                     Content(
                                         screenName = ScreenB::class.simpleName.toString(),
                                         counter = counter,
-                                        onIncrementClick = counterViewModel::increment,
+                                        onIncrementClick = {
+                                            counterViewModel.increment()
+                                        },
                                     )
                                 },
                                 navController = navController
@@ -127,115 +143,115 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-    @Composable
-    private inline fun <reified VM : ViewModel> NavBackStackEntry.sharedViewModel(
-        navController: NavController
-    ): VM {
+@Composable
+private inline fun <reified VM : ViewModel> NavBackStackEntry.sharedViewModel(
+    navController: NavController
+): VM {
 
-        val parentRoute = destination.parent?.route
-            ?: error("sharedViewModel() called but no parent route found. Are you inside a nested graph?")
+    val parentRoute = destination.parent?.route
+        ?: error("sharedViewModel() called but no parent route found. Are you inside a nested graph?")
 
-        val parentEntry = remember(this) {
-            navController.getBackStackEntry(route = parentRoute)
-        }
-
-        return viewModel(viewModelStoreOwner = parentEntry)
+    val parentEntry = remember(this) {
+        navController.getBackStackEntry(route = parentRoute)
     }
 
+    return viewModel(viewModelStoreOwner = parentEntry)
+}
 
-    @Composable
-    fun Screen(
-        text: String,
-        route: Any,
-        content: @Composable () -> Unit,
-        navController: NavController,
-    ) {
-        Column(modifier = Modifier.background(color = Color.White)) {
-            Box(modifier = Modifier.weight(1f)) {
-                content()
-            }
-            Button(
-                onClick = {
-                    navController.navigate(route)
-                },
-                modifier = Modifier.padding(16.dp)
 
-            ) {
-                Text(
-                    text = text
-                )
-            }
+@Composable
+fun Screen(
+    text: String,
+    route: Any,
+    content: @Composable () -> Unit,
+    navController: NavController,
+) {
+    Column(modifier = Modifier.background(color = Color.White)) {
+        Box(modifier = Modifier.weight(1f)) {
+            content()
         }
-    }
-
-
-    @Composable
-    fun Content(
-        screenName: String,
-        counter: Int,
-        onIncrementClick: () -> Unit,
-    ) {
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(color = Color.White),
-            contentAlignment = Alignment.Center
-        ) {
-
-
-            Text(
-                modifier = Modifier
-                    .align(alignment = Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Left,
-                text = screenName
-            )
-
-            Button(
-                onClick = onIncrementClick,
-            ) {
-                Text(
-                    modifier = Modifier.wrapContentSize(),
-                    text = "Counter = $counter"
-                )
-            }
-        }
-    }
-
-
-    @Composable
-    @Preview(showBackground = true)
-
-    fun ScreenAPreview() {
-        val navController = rememberNavController()
-
-        Screen(
-            text = "Go To Specific Screen",
-            route = Unit,
-            content = {
-                Content("ScreenA", 5, {})
-
+        Button(
+            onClick = {
+                navController.navigate(route)
             },
-            navController = navController
+            modifier = Modifier.padding(16.dp)
+
+        ) {
+            Text(
+                text = text
+            )
+        }
+    }
+}
+
+
+@Composable
+fun Content(
+    screenName: String,
+    counter: Int,
+    onIncrementClick: () -> Unit,
+) {
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color = Color.White),
+        contentAlignment = Alignment.Center
+    ) {
+
+
+        Text(
+            modifier = Modifier
+                .align(alignment = Alignment.TopCenter)
+                .fillMaxWidth()
+                .padding(20.dp),
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Left,
+            text = screenName
         )
 
+        Button(
+            onClick = onIncrementClick,
+        ) {
+            Text(
+                modifier = Modifier.wrapContentSize(),
+                text = "Counter = $counter"
+            )
+        }
     }
+}
 
-    @Composable
-    @Preview(showBackground = true)
-    fun ContentPreview() {
-        Content("ScreenA", 5, {})
-    }
 
-    @Serializable
-    data object ScreenA
+@Composable
+@Preview(showBackground = true)
 
-    @Serializable
-    data class ScreenB(val greetings: String)
+fun ScreenAPreview() {
+    val navController = rememberNavController()
 
-    @Serializable
-    data object ScreenC
+    Screen(
+        text = "Go To Specific Screen",
+        route = Unit,
+        content = {
+            Content("ScreenA", 5, {})
+
+        },
+        navController = navController
+    )
+
+}
+
+@Composable
+@Preview(showBackground = true)
+fun ContentPreview() {
+    Content("ScreenA", 5, {})
+}
+
+@Serializable
+data object ScreenA
+
+@Serializable
+data class ScreenB(val greetings: String)
+
+@Serializable
+data object ScreenC

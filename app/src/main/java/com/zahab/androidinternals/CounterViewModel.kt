@@ -17,7 +17,6 @@ class CounterViewModel(
     fun increment() {
 
         savedStateHandle.update<Int>("counter") { it ->
-            println("it=$it")
             it + 1
         }
 
