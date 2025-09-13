@@ -80,14 +80,6 @@ class AnimatedCircleView(context: Context, attrs: AttributeSet?) : View(context,
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-//        canvas.drawOval(
-//            width * 0.25f,
-//            height * 0.25f,
-//            width * 0.75f,
-//            height * 0.75f,
-//            ovalPaint
-//        )
-
         canvas.drawCircle(
             width /2.0f,
             height/2.0f,
