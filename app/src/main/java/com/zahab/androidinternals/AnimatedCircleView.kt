@@ -53,7 +53,6 @@ class AnimatedCircleView(context: Context, attrs: AttributeSet?) : View(context,
         colorAnimator.addUpdateListener {
             ovalPaint.color = interpolateColor(colorAnimator.animatedValue as Float)
             invalidate()
-
         }
     }
 
