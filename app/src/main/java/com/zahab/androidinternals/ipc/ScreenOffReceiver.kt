@@ -1,4 +1,4 @@
-package com.zahab.androidinternals
+package com.zahab.androidinternals.ipc
 
 import android.content.BroadcastReceiver
 import android.content.Context
