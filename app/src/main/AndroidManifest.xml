@@ -2,11 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="com.zahab.ACTION_NOTIFY_VIA_BROADCAST"/>
+    <permission android:name="com.zahab.androidinternals_ACCESS_DICTIONARY" />
 
     <application
+        android:name=".MyDictionaryApp"
         android:allowBackup="true"
-        android:name=".MyApplication"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -25,7 +25,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name=".services.MusicService"/>
+        <provider
+            android:name=".DictionaryProvider"
+            android:authorities="com.zahab.androidinternals"
+            android:exported="true"
+            android:permission="com.zahab.androidinternals_ACCESS_DICTIONARY" />
     </application>
 
 
