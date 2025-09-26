@@ -67,13 +67,11 @@ class MainActivity : ComponentActivity() {
                             contract = ActivityResultContracts.OpenDocument()
                         ) { uri ->
 
-                            {
                                 uri?.let {
                                     lifecycleScope.launch {
                                         bitmap = readUriAsBitmap(it)
                                     }
                                 }
-                            }
                         }
 
 
