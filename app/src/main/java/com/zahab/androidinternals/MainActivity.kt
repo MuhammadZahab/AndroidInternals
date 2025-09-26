@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.lifecycleScope
+import com.plcoding.androidinternals.Crypto
 import com.zahab.androidinternals.ui.theme.AndroidInternalszahabTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -37,115 +38,50 @@ import java.io.File
 import java.io.FileOutputStream
 
 class MainActivity : ComponentActivity() {
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
-        lifecycleScope.launch {
-            writeToExternalStorate()
-        }
-
         setContent {
             AndroidInternalszahabTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(innerPadding),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
-
-                        var bitmap by remember {
-                            mutableStateOf<Bitmap?>(null)
+                        var encrypted by remember {
+                            mutableStateOf<ByteArray?>(null)
                         }
-
-                        val launcher = rememberLauncherForActivityResult(
-                            contract = ActivityResultContracts.OpenDocument()
-                        ) { uri ->
-
-                                uri?.let {
-                                    lifecycleScope.launch {
-                                        bitmap = readUriAsBitmap(it)
-                                    }
+                        var decrypted by remember {
+                            mutableStateOf<ByteArray?>(null)
+                        }
+                        Button(
+                            onClick = {
+                                encrypted = Crypto.encrypt("Hello world!".encodeToByteArray())
+                            }
+                        ) {
+                            Text("Encrypt")
+                        }
+                        encrypted?.let {
+                            Text(it.decodeToString())
+                        }
+                        Button(
+                            onClick = {
+                                encrypted?.let {
+                                    decrypted = Crypto.decrypt(it)
                                 }
+                            }
+                        ) {
+                            Text("Decrypt")
                         }
-
-
-                        Button(onClick = {
-                            launcher.launch(arrayOf("image/*"))
-                        }) {
-                            Text("Pick Photo")
-                        }
-
-                        bitmap?.let {
-                            Image(
-                                bitmap = bitmap!!.asImageBitmap(),
-                                contentDescription = null,
-                                modifier = Modifier.fillMaxWidth()
-                            )
+                        decrypted?.let {
+                            Text(it.decodeToString())
                         }
                     }
-
-
                 }
             }
         }
     }
-
-    private suspend fun readUriAsBitmap(uri: Uri): Bitmap? = withContext(Dispatchers.IO) {
-
-
-        val bytes = contentResolver.openInputStream(uri)?.use { input ->
-            input.readBytes()
-        } ?: return@withContext null
-        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-
-
-    }
-
-
-    override fun onDestroy() {
-        super.onDestroy()
-        println("Receiver Unregistered")
-    }
-
-    private suspend fun writeToInternalStorage() = withContext(Dispatchers.IO) {
-
-        val file = File(filesDir, "hello.txt")
-        FileOutputStream(file).use { outputStream ->
-            outputStream.write("Bismillah".toByteArray())
-        }
-
-    }
-
-    private suspend fun writeToExternalStorate() = withContext(Dispatchers.IO) {
-        val dir = getExternalFilesDir(null)
-        val file = File(dir, "hello.txt")
-
-        FileOutputStream(file).use { outputStream ->
-            outputStream.write("Allah o Akbar".toByteArray())
-        }
-    }
-
 }
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    AndroidInternalszahabTheme {
-        Greeting("Android")
-    }
-}
-
